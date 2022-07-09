@@ -8,7 +8,7 @@ This application provides features such as:\
    3. News by Terms
    4. News  by Source\
 -> Reading of news article headlines &amp; description by AI
--> Viewing of full article in browser by given voice command\
+-> Viewing of full article in browser by given voice command
 
 # Application link:
 https://informant-news-app.netlify.app/
