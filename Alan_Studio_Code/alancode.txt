@@ -1,0 +1,171 @@
+// informant News App
+intent('(Tell|Explain|Inform) (me|) (about|) (this|the) (news|) (app|application|website) (?|)', '(What|How) (does|) (this|the|) (news|) (app|application|website) (work|do|does) (?|)',
+       reply('This is an AI based news application. Here, you can search for latest news, news by sources, news by term and even news by category by using your voice. You can even ask AI to read article headlines and description and to open particular article in browser. You can even navigate through application by using your voice.'));
+
+const NEWS_API_KEY = '';
+let fetchedArticles =[];
+
+// Latest news
+intent(`(read|show|get|bring me|give me) (the|) (recent|latest|) $(N news|headlines)` ,(p) =>{
+    let NEWS_API_URL = `https://newsapi.org/v2/top-headlines?language=en&apiKey=${NEWS_API_KEY}`;
+    
+    api.request(NEWS_API_URL, (error, response, body) =>{
+        const {articles} = JSON.parse(body);
+        console.log({articles});
+        
+        if(!articles.length) {
+            p.play('Sorry, unable to fetch. Please try again.');
+            return;
+        }
+        
+        fetchedArticles = articles;
+        
+        p.play({command: 'newsHeadlines',articles});
+        p.play(`Here are the (latest|recent) news.`);
+        
+        p.play('Would you like me to read the headlines & description?');
+        p.then(confirmation);
+    });
+})
+
+// News by source
+
+intent(`(read|show|get|bring me|give me) (the|) (recent|latest|) $(source* (.+)) $(N news|headlines)` ,(p) =>{
+    let NEWS_API_URL = `https://newsapi.org/v2/top-headlines?apiKey=${NEWS_API_KEY}&language=en`;
+    
+    if(p.source.value) {
+        NEWS_API_URL = `${NEWS_API_URL}&sources=${p.source.value.toLowerCase().split(" ").join('-')}`
+    }
+    
+    console.log(p.source.value);
+    
+    api.request(NEWS_API_URL, (error, response, body) =>{
+        const {articles} = JSON.parse(body);
+        console.log({articles});
+        
+        if(!articles.length) {
+            p.play('Sorry, unable to fetch. Please try again or try searching for different source.');
+            return;
+        }
+        
+        fetchedArticles = articles;
+        
+        p.play({command: 'newsHeadlines',articles});
+        p.play(`Here are the (latest|recent) ${p.source.value}`);
+        
+        p.play('Would you like me to read the headlines & description?');
+        p.then(confirmation);
+    });
+})
+
+// News by term
+
+intent(`(read|show|get|bring me|give me|) (news|) (about|) (the|) $(term* (.+))` ,(p) =>{
+    let NEWS_API_URL = `https://newsapi.org/v2/everything?apiKey=${NEWS_API_KEY}&language=en`;
+    
+    if(p.term.value) {
+        NEWS_API_URL = `${NEWS_API_URL}&q=${p.term.value.toLowerCase()}`
+    }
+    
+    api.request(NEWS_API_URL, (error, response, body) =>{
+        const {articles} = JSON.parse(body);
+        console.log({articles});
+        
+        if(!articles.length) {
+            p.play('Sorry, unable to fetch. Please try again or try searching for different term.');
+            return;
+        }
+        
+        fetchedArticles = articles;
+        
+        p.play({command: 'newsHeadlines',articles});
+        p.play(`Here are the (latest|recent) ${p.term.value} news`);
+        
+        p.play('Would you like me to read the headlines & description?');
+        p.then(confirmation);
+    });
+})
+
+// News by categories
+intent(`(read|show|get|bring me|give me) (news|) (about|on) (the|) (recent|latest|) $(categories* (.+))` ,(p) =>{
+    let NEWS_API_URL = `https://newsapi.org/v2/top-headlines?apiKey=${NEWS_API_KEY}&language=en`;
+    
+    if(p.categories.value) {
+        NEWS_API_URL = `${NEWS_API_URL}&category=${p.categories.value.toLowerCase()}`
+    }
+    
+    api.request(NEWS_API_URL, (error, response, body) =>{
+        const {articles} = JSON.parse(body);
+        console.log({articles});
+        
+        if(!articles.length) {
+            p.play('Sorry, unable to fetch. Please try again or try searching for different category.');
+            return;
+        }
+        
+        fetchedArticles = articles;
+        
+        p.play({command: 'newsHeadlines',articles});
+        p.play(`Here are the (latest|recent) ${p.categories.value} headlines`);
+        
+        p.play('Would you like me to read the headlines & description?');
+        p.then(confirmation);
+    });
+})
+
+// Reading news article by confirmation
+const confirmation = context(() => {
+    intent('(yes|yeah|okay)', async (p) => {
+        for(let i = 0; i < fetchedArticles.length; i++){
+            p.play({ command: 'highlight', article: fetchedArticles[i]});
+            p.play(`${fetchedArticles[i].title}`);
+            p.play(`Description:`);
+            p.play(`${fetchedArticles[i].description}`);
+            
+        }
+    })
+    
+    intent('(no|nah)', (p) => {
+        p.play('Sure, sounds good to me.')
+    })
+})
+
+//Reading of headlines
+intent('(read|recite) (out|) (article|news) (headlines|title)', async (p) => {
+        for(let i = 0; i < fetchedArticles.length; i++){
+            p.play({ command: 'highlight', article: fetchedArticles[i]});
+            p.play(`${fetchedArticles[i].title}`);
+        }
+})
+
+//Reading of news description
+intent('(read|recite) (out|) (article|news) (description|summary|details|interpretation)', async (p) => {
+        for(let i = 0; i < fetchedArticles.length; i++){
+            p.play({ command: 'highlight', article: fetchedArticles[i]});
+            p.play(`${fetchedArticles[i].description}`);
+        }
+})
+
+//Reading of article headlines and description
+intent('(read|recite) (out|) (article|news) (headlines|title) (and|&|with|) (description|summary|details|interpretation)', async (p) => {
+        for(let i = 0; i < fetchedArticles.length; i++){
+            p.play({ command: 'highlight', article: fetchedArticles[i]});
+            p.play(`${fetchedArticles[i].title}`);
+            p.play(`Description:`);
+            p.play(`${fetchedArticles[i].description}`);
+        }
+})
+
+// Viewing full article
+intent(`(open|show|) (the|) (article|) (number|) $(number* (.+))`, (p) => {
+    if(p.number.value) {
+        p.play('Opening, please wait.')
+        p.play({ command:'open', number: p.number.value, articles: fetchedArticles})
+    }
+})
+
+// Navigation
+intent('(go|) (to|) (back|home|prev) (page|)', (p) => {
+    p.play('Sure, going back');
+    p.play({ command: 'newsHeadlines', articles: []})
+})
