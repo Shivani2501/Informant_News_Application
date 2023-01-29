@@ -7,7 +7,8 @@ This application provides features such as:\
    2. News by Categories
    3. News by Terms
    4. News  by Source\
--> Reading of news article headlines &amp; description by AI
+   
+-> Reading of news article headlines &amp; description by AI\
 -> Viewing of full article in browser by given voice command
 
 # Application link:
